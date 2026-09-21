@@ -1,5 +1,5 @@
 export const API_BASE = window.__SECUREID_CONFIG__?.apiBaseUrl
-  || (window.location.port && window.location.port !== "3000" ? "https://auth-mfa.vercel.app/" : "");
+  || (window.location.port && window.location.port !== "3000" ? "https://auth-mfa.vercel.app" : "");
 
 export async function api(url, options = {}) {
   const response = await fetch(`${API_BASE}${url}`, {
