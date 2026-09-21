@@ -274,7 +274,7 @@ Do not commit:
 
 The `.gitignore` files are already configured for these files.
 
-## Deploy backend
+## Deploy backend on Render/Railway/Fly.io
 
 Deploy the backend to Render, Railway, Fly.io, or another Node.js hosting provider.
 
@@ -297,6 +297,18 @@ GOOGLE_CALLBACK_URL=https://your-backend-domain.com/api/auth/google/callback
 ```
 
 Use HTTPS domains in production.
+
+### Deploy backend on Vercel
+
+The backend includes `backend/api/index.js` as the Vercel serverless entrypoint.
+
+1. Create a separate Vercel project from the same GitHub repository.
+2. Set the project root directory to `backend`.
+3. Leave the build command and output directory empty/default.
+4. Add all variables from `backend/.env.example`.
+5. Deploy.
+
+The backend does not need a `vercel.json`. Do not add legacy `builds` or `routes` blocks; Vercel detects `api/index.js` automatically.
 
 ## Deploy frontend to Vercel
 

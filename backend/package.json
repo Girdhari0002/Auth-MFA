@@ -17,6 +17,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.10.1",
     "nodemailer": "^10.0.10",
+    "otplib": "^13.5.0",
     "qrcode": "^1.5.4",
     "twilio": "^6.1.1"
   }
