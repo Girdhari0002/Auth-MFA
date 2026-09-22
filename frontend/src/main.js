@@ -3,6 +3,33 @@ import { state } from "./state/store.js";
 
 const app = document.querySelector("#app");
 const modeButtons = document.querySelectorAll(".mode-button");
+let countdownTimer;
+
+function remainingSeconds() {
+  return Math.max(0, Math.ceil((state.expiresAt - Date.now()) / 1000));
+}
+
+function formatCountdown(seconds) {
+  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function startCountdown() {
+  clearInterval(countdownTimer);
+  const timer = document.querySelector("#otp-countdown");
+  const verify = document.querySelector("#verify-otp");
+  if (!timer || !state.expiresAt) return;
+
+  const update = () => {
+    const seconds = remainingSeconds();
+    timer.textContent = formatCountdown(seconds);
+    if (verify) verify.disabled = seconds === 0;
+    if (seconds === 0) clearInterval(countdownTimer);
+  };
+
+  update();
+  countdownTimer = setInterval(update, 1000);
+}
+
 function progress(active, total = 4) {
   return `<div class="progress">${Array.from({ length: total }, (_, i) => `<div class="step ${i + 1 <= active ? "active" : ""}"><span class="step-dot">${i + 1}</span></div>${i < total - 1 ? '<span class="step-line"></span>' : ""}`).join("")}</div>`;
 }
@@ -10,6 +37,7 @@ function render() {
   const screens = { login: loginScreen, "login-method": methodScreen, "login-otp": () => otpScreen("login"), register: registerScreen, "register-email": () => otpScreen("email"), "register-sms": () => otpScreen("sms"), mfa: mfaScreen, success: successScreen, dashboard: dashboardScreen };
   app.innerHTML = `${progress(state.screen === "login" ? 1 : state.screen === "register" ? 1 : state.screen === "success" ? 4 : 2, state.mode === "register" ? 4 : 3)}${screens[state.screen]()}`;
   wire();
+  startCountdown();
 }
 function loginScreen() {
   return `<section class="screen"><div class="icon-circle">♜</div><h2>Welcome back!</h2><p class="subhead">Login to your account</p><form id="login-form"><div class="field"><label>Email or Username</label><input name="identifier" autocomplete="username" required placeholder="you@example.com" /></div><div class="field" style="margin-top:14px"><label>Password</label><div class="password-wrap"><input name="password" type="password" autocomplete="current-password" required placeholder="Enter your password" /><button type="button" class="toggle-password">◉</button></div></div><div class="remember-row"><label><input type="checkbox" name="remember" /> Remember me</label><span class="link">Forgot password?</span></div><div id="form-alert"></div><button class="primary">Login</button></form><div class="divider">or</div><button class="secondary google-button" id="google-login"><span class="google-logo">G</span> Continue with Google</button><p class="switch-copy">New here? <span class="link" data-switch="register">Create an account</span></p></section>`;
@@ -22,7 +50,7 @@ function otpScreen(channel) {
   const isSms = state.selectedLoginMethod === "sms" || channel === "sms";
   const title = isAuth ? "Authenticator Verification" : isSms ? "Verify your mobile" : "Verify your email";
   const target = isAuth ? "your authenticator app" : isSms ? state.userPhone : state.userEmail;
-  return `<section class="screen center"><div class="icon-circle ${state.lastError ? "error" : ""}">${isAuth ? "♙" : isSms ? "⌕" : "✉"}</div><h2>${title}</h2><p class="subhead">${isAuth ? "Enter the 6-digit code from" : "We have sent a 6-digit code to"}<br /><strong>${escapeHtml(target)}</strong></p><div class="otp">${Array.from({ length: 6 }, (_, i) => `<input maxlength="1" inputmode="numeric" data-index="${i}" ${state.lastError ? "class='invalid'" : ""} />`).join("")}</div>${state.lastError ? `<div class="alert">${escapeHtml(state.lastError)}</div>` : ""}<p class="timer">${isAuth ? "Code refreshes every 30 seconds" : "Code expires in"} <strong>${isAuth ? "" : "02:45"}</strong></p>${!isAuth ? '<button class="resend" id="resend">Resend code</button>' : ""}<p class="hint">${isAuth ? "Use Google Authenticator or Authy." : "Didn't receive the code?"}</p><div class="form-actions"><button class="primary" id="verify-otp">Verify code</button></div></section>`;
+  return `<section class="screen center"><div class="icon-circle ${state.lastError ? "error" : ""}">${isAuth ? "♙" : isSms ? "⌕" : "✉"}</div><h2>${title}</h2><p class="subhead">${isAuth ? "Enter the 6-digit code from" : "We have sent a 6-digit code to"}<br /><strong>${escapeHtml(target)}</strong></p><div class="otp">${Array.from({ length: 6 }, (_, i) => `<input maxlength="1" inputmode="numeric" data-index="${i}" ${state.lastError ? "class='invalid'" : ""} />`).join("")}</div>${state.lastError ? `<div class="alert">${escapeHtml(state.lastError)}</div>` : ""}<p class="timer">${isAuth ? "Code refreshes every 30 seconds" : "Code expires in"} <strong id="otp-countdown">${isAuth ? "" : formatCountdown(remainingSeconds())}</strong></p>${!isAuth ? '<button class="resend" id="resend">Resend code</button>' : ""}<p class="hint">${isAuth ? "Use Google Authenticator or Authy." : "Didn't receive the code?"}</p><div class="form-actions"><button class="primary" id="verify-otp">Verify code</button></div></section>`;
 }
 function methodScreen() {
   const enabled = (id) => state.loginMethods?.find((item) => item.id === id)?.enabled === true;
@@ -46,7 +74,7 @@ function wire() {
   document.querySelectorAll("[data-switch]").forEach((el) => el.addEventListener("click", () => { state.mode = el.dataset.switch; state.screen = el.dataset.switch; state.lastError = ""; render(); }));
   document.querySelectorAll(".toggle-password").forEach((button) => button.addEventListener("click", () => { const input = button.previousElementSibling; input.type = input.type === "password" ? "text" : "password"; }));
   const register = document.querySelector("#register-form");
-  if (register) register.addEventListener("submit", async (event) => { event.preventDefault(); const data = Object.fromEntries(new FormData(register)); try { const result = await api("/api/register", { method:"POST", body:JSON.stringify(data) }); state.pendingId = result.pendingId; state.challengeId = result.challengeId; state.userEmail = data.email; state.userPhone = data.phone; state.screen = "register-email"; render(); } catch (error) { showAlert(error.message); } });
+  if (register) register.addEventListener("submit", async (event) => { event.preventDefault(); const data = Object.fromEntries(new FormData(register)); try { const result = await api("/api/register", { method:"POST", body:JSON.stringify(data) }); state.pendingId = result.pendingId; state.challengeId = result.challengeId; state.expiresAt = Date.now() + (result.expiresIn || 180) * 1000; state.userEmail = data.email; state.userPhone = data.phone; state.screen = "register-email"; render(); } catch (error) { showAlert(error.message); } });
   const login = document.querySelector("#login-form");
   const googleLogin = document.querySelector("#google-login");
   if (googleLogin) googleLogin.addEventListener("click", () => { window.location.href = `${API_BASE}/api/auth/google`; });
@@ -65,6 +93,7 @@ function wire() {
       } else {
         const result = await api("/api/login/challenge", { method: "POST", body: JSON.stringify({ identifier: state.loginIdentifier, method }) });
         state.challengeId = result.challengeId;
+        state.expiresAt = Date.now() + (result.expiresIn || 180) * 1000;
         state.screen = "login-otp";
       }
       render();
@@ -110,6 +139,7 @@ function wire() {
       const result = await api(endpoint, { method:"POST", body:JSON.stringify({ challengeId:state.challengeId, code, method:state.selectedLoginMethod, identifier:state.loginIdentifier }) });
       state.challengeId = result.challengeId || state.challengeId;
       state.pendingId = result.pendingId || state.pendingId;
+      if (result.expiresIn) state.expiresAt = Date.now() + result.expiresIn * 1000;
       state.lastError = "";
       state.screen = state.screen === "login-otp" ? "dashboard" : state.screen === "register-email" ? "register-sms" : "mfa";
       render();

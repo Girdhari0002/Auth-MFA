@@ -28,8 +28,20 @@ async function handler(req, res) {
 if (process.env.VERCEL !== "1") {
   connectDatabase()
     .then(() => {
-      app.listen(port, () => {
+      const server = app.listen(port, () => {
         console.log(`SecureID running at http://localhost:${port}`);
+      });
+
+      server.on("error", (error) => {
+        if (error.code === "EADDRINUSE") {
+          console.error(
+            `Port ${port} is already in use. Stop the existing server or set a different PORT in .env.`
+          );
+        } else {
+          console.error(`Server startup failed: ${error.message}`);
+        }
+
+        process.exit(1);
       });
     })
     .catch((error) => {

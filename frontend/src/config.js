@@ -1,3 +1,3 @@
 window.__SECUREID_CONFIG__ = window.__SECUREID_CONFIG__ || {
-  apiBaseUrl: "",
+  apiBaseUrl: "https://auth-mfa.vercel.app",
 };

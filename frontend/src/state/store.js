@@ -6,4 +6,5 @@ export const state = {
   userEmail: "",
   userPhone: "",
   expiresAt: 0,
+  lastError: "",
 };
