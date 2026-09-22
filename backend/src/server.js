@@ -7,6 +7,13 @@ const app = createApp();
 let dbConnected = false;
 
 async function handler(req, res) {
+  if (req.method === "GET" && (req.url === "/" || req.url === "/api")) {
+    return res.json({
+      success: true,
+      message: "SecureID backend is running",
+    });
+  }
+
   try {
     if (!dbConnected) {
       await connectDatabase();
