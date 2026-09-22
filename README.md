@@ -340,6 +340,7 @@ Update Google OAuth settings with the production backend callback URL.
 - Configure SMTP and Twilio production credentials.
 - Rotate any credential that was exposed during development.
 - Configure the exact frontend URL in `FRONTEND_URL`.
+- For Vercel preview deployments, configure their comma-separated URLs in `FRONTEND_URLS`.
 - Configure the exact Google callback URL.
 - Confirm CORS and cookies work across frontend and backend domains.
 

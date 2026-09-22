@@ -15,8 +15,9 @@ function createApp() {
   const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:5173",
+    ...(process.env.FRONTEND_URLS || "").split(","),
     process.env.FRONTEND_URL,
-  ].filter(Boolean);
+  ].map((origin) => origin.trim()).filter(Boolean);
 
   app.use((req, res, next) => {
     const origin = req.headers.origin;
