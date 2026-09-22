@@ -3,7 +3,7 @@ const User = require("../models/User");
 const { createOtpChallenge, verifyOtp } = require("../services/otpService");
 const { jwtSecret } = require("../config/env");
 const jwt = require("jsonwebtoken");
-const { verifySync } = require("otplib");
+const { authenticator } = require("otplib");
 const OtpChallenge = require("../models/OtpChallenge");
 
 async function login(req, res) {
@@ -28,7 +28,7 @@ async function verifyLoginOtp(req, res) {
   if (req.body?.method === "authenticator") {
     const user = await User.findOne({ email: String(req.body?.identifier || "").toLowerCase() }).select("+authenticatorSecret");
     const valid = user && /^\d{6}$/.test(String(req.body?.code || ""))
-      ? verifySync({ token: String(req.body.code), secret: user.authenticatorSecret })
+      ? { valid: authenticator.check(String(req.body.code), user.authenticatorSecret) }
       : { valid: false };
     if (!valid.valid) return res.status(400).json({ message: "Invalid authenticator code." });
     req.session.userId = user._id.toString();

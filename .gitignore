@@ -6,6 +6,8 @@ backend/node_modules/
 backend/.env
 backend/.env.*
 !backend/.env.example
+backend/package-lock.json
+
 
 # Logs
 npm-debug.log*

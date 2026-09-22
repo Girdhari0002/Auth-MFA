@@ -4,7 +4,7 @@ const User = require("../models/User");
 const PendingRegistration = require("../models/PendingRegistration");
 const { createOtpChallenge, verifyOtp } = require("./otpService");
 const QRCode = require("qrcode");
-const { verifySync } = require("otplib");
+const { authenticator } = require("otplib");
 
 function toBase32(buffer) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -88,7 +88,7 @@ async function verifyAuthenticator(pendingId, code) {
   const pending = await PendingRegistration.findById(pendingId);
   if (!pending || !pending.emailVerified || !pending.mobileVerified) return { ok: false, status: 404, message: "Registration session not found." };
   const totpResult = /^\d{6}$/.test(String(code || ""))
-    ? verifySync({ token: String(code), secret: pending.authenticatorSecret })
+    ? { valid: authenticator.check(String(code), pending.authenticatorSecret) }
     : { valid: false };
   if (!totpResult.valid) {
     return { ok: false, status: 400, message: "Invalid authenticator code." };
