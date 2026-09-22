@@ -15,6 +15,7 @@ function createApp() {
   const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:5173",
+    "https://girdhari-o036jss05-girdhari-singh-yadavs-projects.vercel.app",
     ...(process.env.FRONTEND_URLS || "").split(","),
     process.env.FRONTEND_URL,
   ].map((origin) => origin.trim()).filter(Boolean);
