@@ -306,7 +306,7 @@ The backend includes `backend/api/index.js` as the Vercel serverless entrypoint.
 2. Set the project root directory to `backend`.
 3. Leave the build command and output directory empty/default.
 4. Add all variables from `backend/.env.example`.
-5. Deploy.
+5. Deploy and verify `https://your-backend-domain.com/` returns the SecureID health response.
 
 The backend does not need a `vercel.json`. Do not add legacy `builds` or `routes` blocks; Vercel detects `api/index.js` automatically.
 
